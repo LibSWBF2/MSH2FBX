@@ -497,7 +497,7 @@ namespace ConverterLib
 							// defining the Basepose. So ignore all possible other frames
 							Vector3& boneTranslation = BoneFrames[i].m_TranslationFrames[0].m_Translation;
 							Vector4& boneRotation = BoneFrames[i].m_RotationFrames[0].m_Rotation;
-							FbxVector4 rot = QuaternionToEuler(boneRotation);
+							FbxVector4 rot(QuaternionToEuler(boneRotation));
 
 							ApplyTransform(
 								boneNode,
@@ -724,13 +724,16 @@ namespace ConverterLib
 
 		// assuming only one animation per msh, this should be temporary
 		Animation& anim = animations.m_AnimationCycle.m_Animations[0];
-		string& animName = OverrideAnimName != "" ? OverrideAnimName : anim.m_AnimationName.Buffer();
+		string animName = OverrideAnimName != "" ? OverrideAnimName : anim.m_AnimationName.Buffer();
 		FbxAnimStack* animStack = FbxAnimStack::Create(Scene, animName.c_str());
 
 		FbxTime start, end;
 		start.SetSecondDouble(anim.m_FirstFrame / anim.m_FrameRate);
 		end.SetSecondDouble(anim.m_LastFrame / anim.m_FrameRate);
-		animStack->SetLocalTimeSpan(FbxTimeSpan(start, end));
+
+		FbxTimeSpan timeSpan(start,end);
+
+		animStack->SetLocalTimeSpan(timeSpan);//FbxTimeSpan(start, end));
 
 		FbxAnimLayer* animLayer = FbxAnimLayer::Create(Scene, string(animName + "_Layer").c_str());
 		animStack->AddMember(animLayer);
@@ -780,7 +783,7 @@ namespace ConverterLib
 			for (size_t j = 0; j < bf.m_RotationFrames.Size(); ++j)
 			{
 				RotationFrame& rotFrame = bf.m_RotationFrames[j];
-				FbxVector4 rot = QuaternionToEuler(rotFrame.m_Rotation);
+				FbxVector4 rot(QuaternionToEuler(rotFrame.m_Rotation));
 
 				FbxTime time;
 				time.SetSecondDouble(rotFrame.m_FrameIndex / anim.m_FrameRate);

@@ -1,15 +1,26 @@
 #pragma once
 #include "stdafx.h"
 
+#ifdef _WIN32
+
 #ifdef MSH2FBXDLL_EXPORTS
 #define MSH2FBX_API __declspec(dllexport)
 #else
 #define MSH2FBX_API __declspec(dllimport)
 #endif
 
+#else
+
+#define MSH2FBX_API __attribute__((visibility("default")))
+
+#endif //_WIN32
+
 using ConverterLib::Converter;
 using ConverterLib::LogCallback;
-using LibSWBF2::Chunks::Mesh::MSH;
+//using LibSWBF2::Chunks::Mesh::MSH;
+using namespace LibSWBF2::Chunks::MSH;
+
+
 namespace fs = std::filesystem;
 
 namespace MSH2FBX

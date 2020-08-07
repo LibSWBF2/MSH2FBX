@@ -21,18 +21,18 @@ namespace MSH2FBX
 
 	MSH2FBX_API void Converter_Set_ModelIgnoreFilter(Converter* converter, const uint16_t filter)
 	{
-		converter->ModelIgnoreFilter = (LibSWBF2::Chunks::Mesh::EModelPurpose)filter;
+		converter->ModelIgnoreFilter = (LibSWBF2::EModelPurpose) filter;
 	}
 
 	MSH2FBX_API uint16_t Converter_Get_ModelIgnoreFilter(const Converter* converter)
 	{
-		return converter->ModelIgnoreFilter;
+		return (uint16_t) converter -> ModelIgnoreFilter;
 	}
 
 
 	MSH2FBX_API void Converter_Set_ChunkFilter(Converter* converter, const uint8_t filter)
 	{
-		converter->ChunkFilter = (ConverterLib::EChunkFilter)filter;
+		converter->ChunkFilter = (ConverterLib::EChunkFilter) filter;
 	}
 
 	MSH2FBX_API uint8_t Converter_Get_ChunkFilter(const Converter* converter)
@@ -54,12 +54,12 @@ namespace MSH2FBX
 
 	MSH2FBX_API void Converter_Set_EmptyMeshes(Converter* converter, const bool emptyMeshes)
 	{
-		converter->EmptyMeshes = emptyMeshes;
+		converter->bEmptyMeshes = emptyMeshes;
 	}
 
 	MSH2FBX_API bool Converter_Get_EmptyMeshes(const Converter* converter)
 	{
-		return converter->EmptyMeshes;
+		return converter->bEmptyMeshes;
 	}
 
 
