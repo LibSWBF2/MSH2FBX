@@ -291,7 +291,7 @@ namespace ConverterLib
 
 		if (exporter->Initialize(FbxFilePath.u8string().c_str(), -1, Manager->GetIOSettings()))
 		{
-			exporter->SetFileExportVersion(FBX_2011_00_COMPATIBLE);
+			exporter->SetFileExportVersion(FBX_2019_00_COMPATIBLE);
 			if (!exporter->Export(Scene, false))
 			{
 				Log("Exporting failed!\n" + string(exporter->GetStatus().GetErrorString()), ELogType::Error);
@@ -794,7 +794,7 @@ namespace ConverterLib
 		}
 	}
 
-	bool Converter::MATDToFBXMaterial(const MATD& material, FbxNode* meshNode, int& matIndex)
+	bool Converter::MATDToFBXMaterial(const MATD& material, FbxNode* meshNode, FbxLayer* layer, int& matIndex)
 	{
 		if (Manager == nullptr)
 		{
@@ -807,6 +807,9 @@ namespace ConverterLib
 			Log("Given FbxNode is NULL!", ELogType::Error);
 			return false;
 		}
+
+		// TODO:
+		FbxLayerElementMaterial* materials = layer->GetMaterials();
 
 		matIndex = meshNode->GetMaterialIndex(material.m_Name.m_Text.Buffer());
 
@@ -847,6 +850,11 @@ namespace ConverterLib
 		}
 
 		FbxMesh* mesh = FbxMesh::Create(Manager, model.m_Name.m_Text.Buffer());
+		FbxLayer* layer = mesh->GetLayer(0);
+		if (layer == nullptr)
+		{
+			layer = mesh->GetLayer(mesh->CreateLayer());
+		}
 
 		vector<FbxVector4> vertices;
 		vector<FbxVector4> normals;
@@ -892,7 +900,7 @@ namespace ConverterLib
 					{
 						MATD& mshMat = materials.m_Materials[segment.m_MaterialIndex.m_MaterialIndex];
 
-						if ((ChunkFilter & EChunkFilter::Materials) == 0 && !MATDToFBXMaterial(mshMat, meshNode, fbxMatIndex))
+						if ((ChunkFilter & EChunkFilter::Materials) == 0 && !MATDToFBXMaterial(mshMat, meshNode, layer, fbxMatIndex))
 						{
 							Log("Could not convert MSH Material '" + string(mshMat.m_Name.m_Text.Buffer()) + "' to FbxMaterial!", ELogType::Warning);
 						}
@@ -923,36 +931,29 @@ namespace ConverterLib
 			}
 		}
 
-		// Set vertices (control points)
-		mesh->InitControlPoints((int)vertices.size());
-		FbxVector4* cps = mesh->GetControlPoints();
+		mesh->SetControlPointCount((int)vertices.size());
 		for (size_t i = 0; i < vertices.size(); ++i)
 		{
-			cps[i] = vertices[i];
-		}
-
-		// Set Normals
-		auto elementNormal = mesh->CreateElementNormal();
-		elementNormal->SetMappingMode(FbxGeometryElement::eByControlPoint);
-		elementNormal->SetReferenceMode(FbxGeometryElement::eDirect);
-		for (size_t i = 0; i < normals.size(); ++i)
-		{
-			elementNormal->GetDirectArray().Add(normals[i]);
+			mesh->SetControlPointAt(vertices[i], normals[i], i);
 		}
 
 		// Set UVs (if any)
 		if (uvs.size() > 0)
 		{
-			auto elementUV = mesh->CreateElementUV("DiffuseUVs");
-			elementUV->SetMappingMode(FbxGeometryElement::eByControlPoint);
-			elementUV->SetReferenceMode(FbxGeometryElement::eDirect);
+			FbxLayerElementUV* uvElement = FbxLayerElementUV::Create(mesh, "DiffuseUVs");
+			uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
+			uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
+			uvElement->GetDirectArray().SetCount((int)uvs.size());
+
 			for (size_t i = 0; i < uvs.size(); ++i)
 			{
-				elementUV->GetDirectArray().Add(uvs[i]);
+				uvElement->GetDirectArray().Add(uvs[i]);
 			}
+			layer->SetUVs(uvElement);
 		}
 
 		meshNode->SetNodeAttribute(mesh);
+		meshNode->SetShadingMode(FbxNode::eTextureShading);
 		return true;
 	}
 

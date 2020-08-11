@@ -63,7 +63,7 @@ namespace ConverterLib
 		void MSHToFBXScene();
 		void ANM2ToFBXAnimations(ANM2& animations);
 		void WGHTToFBXSkin(WGHT& weights, const ENVL& envelope, const FbxAMatrix& matrixMeshNode, const size_t vertexOffset, map<MODL*, FbxCluster*>& BoneToCluster);
-		bool MATDToFBXMaterial(const MATD& material, FbxNode* meshNode, int& matIndex);
+		bool MATDToFBXMaterial(const MATD& material, FbxNode* meshNode, FbxLayer* layer, int& matIndex);
 		bool MODLToFBXMesh(MODL& model, MATL& materials, FbxNode* meshNode);
 		bool MODLToFBXSkeleton(MODL& model, FbxNode* boneNode);
 		void CheckHierarchy();
