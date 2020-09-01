@@ -1,28 +1,30 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(MSH2FBX)
-
+#
+# BUILD NOTES
+#
 
 #[[
 
-To build, make sure you have a path variable "LIBSWBF2DIR" set to the "LibSWBF2" subdirectory of the
-libSWBF2 repo.  CMake will use that var to find the necessary header files, and assumes the 
-library you built will be in "${LIBSWBF2DIR}/build."  If that var isn't set, or the "build" dir 
-doesn't exist, CMake will look for the headers and lib in your default search paths.
+Make sure you have LIBSWBF2_INCLUDE and LIBSWBF2_LIB set as environment 
+vars pointing to your libSWBF2 headers and libraries respectively, unless
+you already have them in your path.  I should get around to adding a proper
+install or pkg-config setup for libSWBF2 and all dependant projects.  If you
+have issues building w/CMake on Linux or Mac, drop an issue and tag
+WHSnyder.
 
 ]]
+
+
+
+project(MSH2FBX)
 
 
 #SETTINGS
 
 add_executable(msh2fbx)
-
 set_property(TARGET msh2fbx PROPERTY CXX_STANDARD 17)
 set_property(TARGET msh2fbx PROPERTY CXX_STANDARD_REQUIRED ON)
-
-if (NOT ${CMAKE_BUILD_TYPE} EQUAL "DEBUG")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-endif()
 
 
 
@@ -32,39 +34,39 @@ if(APPLE)
 	target_include_directories(msh2fbx PUBLIC /usr/local/include)
 endif()
 
-file(GLOB MSH_FILES MSH2FBX/*.cpp)
-file(GLOB CONVERTER_FILES ConverterLib/*.cpp)
-file(GLOB DLL_FILES MSH2FBXDLL/*.cpp)
+file(GLOB MSH_FILES MSH2FBX/*.cpp ConverterLib/*.cpp MSH2FBXDLL/*.cpp)
+target_sources(msh2fbx PUBLIC ${MSH_FILES})
 
-list(APPEND SOURCE_FILES ${MSH_FILES})
-list(APPEND SOURCE_FILES ${CONVERTER_FILES})
-list(APPEND SOURCE_FILES ${DLL_FILES})
+set(LIBSWBF2_INCLUDES_DIR $ENV{LIBSWBF2_INCLUDE})
+set(LIBSWBF2_LIBS_DIR $ENV{LIBSWBF2_LIB})
 
-set(LIBSWBF2_DIR $ENV{LIBSWBF2DIR})
-message(STATUS "Env val ${LIBSWBF2_DIR}")
-
-if (NOT ${LIBSWBF2_DIR} EQUAL "")
-	target_include_directories(msh2fbx PUBLIC "${LIBSWBF2_DIR}")
+if (NOT ${LIBSWBF2_INCLUDES_DIR} EQUAL "")
+	target_include_directories(msh2fbx PUBLIC "${LIBSWBF2_INCLUDES_DIR}")
+	target_include_directories(msh2fbx PUBLIC "${LIBSWBF2_INCLUDES_DIR}/DirectX")
+else()
+	message(STATUS "LIBSWBF2_INCLUDE environment variable not set.  
+				   	Assuming libSWBF2 headers are your include path already.")
 endif()
-
-target_sources(msh2fbx PUBLIC ${SOURCE_FILES})
 
 
 
 #LINKING
 
-#Redundant options in case system is underconfigured...
-if(APPLE)
-	target_link_directories(msh2fbx PUBLIC /usr/local/lib/)
+#Redundant/harmless additions to catch underconfigured systems...
+if (APPLE)
 	target_link_options(msh2fbx PUBLIC -undefined dynamic_lookup)
+	target_link_directories(msh2fbx PUBLIC /usr/local/lib/)
 else()
-	target_link_directories(msh2fbx PUBLIC /usr/lib/x86_64-linux-gnu)
-	target_link_libraries(msh2fbx PUBLIC dl)
-	target_link_options(msh2fbx PUBLIC "-Wl,--no-as-needed")
+	target_link_libraries(msh2fbx PUBLIC -ldl)
+	target_link_directories(msh2fbx PUBLIC /usr/lib/x86_64-linux-gnu/)
 endif()
 
-if (NOT ${LIBSWBF2_DIR} EQUAL "")
-	target_link_directories(msh2fbx PUBLIC "${LIBSWBF2_DIR}/build")
+
+if (NOT ${LIBSWBF2_LIBS_DIR} EQUAL "")
+	target_link_directories(msh2fbx PUBLIC ${LIBSWBF2_LIBS_DIR})
+else()
+	message(STATUS "LIBSWBF2_LIB environment variable not set.  
+				   	Assuming libSWBF2 libraries are in your link path already.")
 endif()
 
-target_link_libraries(msh2fbx PUBLIC fbxsdk fmt pthread SWBF2)
+target_link_libraries(msh2fbx PUBLIC SWBF2 fmt fbxsdk)
